@@ -1,9 +1,14 @@
 const STORAGE_KEY = 'data';
-const DISPLAY_KEY = 'tabsSwitched';
+const DISPLAY_KEY = browser.runtime.getManifest().displayKey;
 
-let data = {
+let data = {};
+
+data[getDateKey()] = {
   lastUpdated: (new Date()),
+  tabCounts: Array(24).fill(0),
   tabsLastCount: 0,
+  tabsMaxCount: 0,
+  tabsMinCount: 0,
   tabsOpened: 0,
   tabsClosed: 0,
   tabsSwitched: 0
@@ -18,10 +23,16 @@ const prefixes = {
   tabsSwitched: '~' 
 };
 
-async function loadStorage() {
+function getDateKey() {
+  const d = new Date();
+  return [d.getUTCDate(), d.getUTCMonth(), d.getUTCFullYear()].join('-');
+}
+
+(async function loadStorage() {
   const storage = await browser.storage.local.get(STORAGE_KEY);
 
   // Not first run!
+  //if (false){
   if (storage.data) {
     data = storage.data;
   }
@@ -29,38 +40,50 @@ async function loadStorage() {
   else {
     updateStorage();
   }
-}
+  updateBadge();
+})();
 
 // Save changes to persistent storage
 function updateStorage() {
-  data.lastUpdated = new Date();
   browser.storage.local.set({STORAGE_KEY, data});
 }
 
 function updateBadge() {
-  const str = prefixes[DISPLAY_KEY] + data[DISPLAY_KEY].toString();
+  const dateKey = getDateKey();
+  const str = prefixes[DISPLAY_KEY] + data[dateKey][DISPLAY_KEY].toString();
   browser.browserAction.setBadgeText({text: str});
 }
 
 async function updateData(eventType) {
-  switch(eventType) {
-    case 'onActivated':
-      data.tabsSwitched++;
-      break;
-    case 'onCreated':
-      data.tabsOpened++;
-    case 'onRemoved':
-      data.tabsClosed++;
-    default:
-      let numTabs = await getTabCount();
-      if (eventType == 'onRemoved') {
-        numTabs--;
-      }
-      data.tabsLastCount = numTabs;
-      break;
+  const dateKey = getDateKey();
+  if (eventType == 'onActivated') {
+    data[dateKey].tabsSwitched++;
+  }
+  else {
+    if (eventType == 'onCreated') {
+      data[dateKey].tabsOpened++;
+    }
+    else if (eventType == 'onRemoved') {
+      data[dateKey].tabsClosed++;
+    }
+
+    let numTabs = await getTabCount();
+    if (eventType == 'onRemoved') {
+      numTabs--;
+    }
+    data[dateKey].tabsLastCount = numTabs;
+    data[dateKey].tabCounts[ (new Date()).getUTCHours() ] = numTabs;
+
+    if (numTabs > data[dateKey].tabsMaxCount) {
+      data[dateKey].tabsMaxCount = numTabs;
+    }
+
+    if (data[dateKey].tabsMinCount === 0 || numTabs < data[dateKey].tabsMinCount) {
+      data[dateKey].tabsMinCount = numTabs;
+    }
   }
   updateBadge();
-  //updateStorage();
+  updateStorage();
 }
 
 async function getTabCount() {
