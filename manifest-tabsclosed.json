@@ -2,7 +2,7 @@
   "description": "Tabs Closed",
   "manifest_version": 2,
   "name": "tabs-closed-button",
-  "version": "1.4",
+  "version": "1.5",
 
   "background": {
     "scripts": ["background.js"]
