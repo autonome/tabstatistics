@@ -2,7 +2,7 @@
   "description": "Tabs Opened",
   "manifest_version": 2,
   "name": "tabs-opened-button",
-  "version": "1.5",
+  "version": "1.6",
 
   "background": {
     "scripts": ["background.js"]
