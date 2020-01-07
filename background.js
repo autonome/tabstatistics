@@ -1,7 +1,9 @@
 const STORAGE_KEY = 'data';
 const STORAGE_KEY_DATE_PREFIX = 'date::';
-const STORAGE_DEBOUNCE_MS = 5000; // persist storage once per minute, max
-const DISPLAY_KEY = browser.runtime.getManifest().displayKey || 'tabsLastCount';
+const STORAGE_DEBOUNCE_MS = 60000; // persist storage once per minute, max
+
+// make this user-configurable
+const DISPLAY_KEY = 'tabsLastCount';
 
 let dateDataCache = null;
 
@@ -17,11 +19,9 @@ const prefixes = {
 // Listen for the reasons for activation, and pass
 // to initialization function.
 browser.runtime.onStartup.addListener(() => {
-  //console.log('onStartup')
   init('startup');
 });
 browser.runtime.onInstalled.addListener(() => {
-  //console.log('onInstalled')
   init('install');
 });
 
@@ -53,10 +53,22 @@ let updateStorage = debounce(async function updateStorage() {
 }, STORAGE_DEBOUNCE_MS);
 
 async function updateBadge() {
+  // get data for current date
   const dateKey = getDateKey();
   const dateData = await getDateData(dateKey);
-  const str = prefixes[DISPLAY_KEY] + dateData[DISPLAY_KEY].toString();
+
+  // update badge data with default display value
+  const count = dateData[DISPLAY_KEY]
+  // 3 char display length limit on badge
+  const str = count > 999 ? '999' : count.toString();
   browser.browserAction.setBadgeText({text: str});
+
+  // set icon tooltip to summary of all counters
+  let formattedCounts = Object.keys(prefixes).map(prefix => {
+    return prefixes[prefix] + dateData[prefix].toString();
+  });
+
+  browser.browserAction.setTitle({title: formattedCounts.join(' / ')});
 }
 
 async function updateData(eventType) {
@@ -89,7 +101,9 @@ async function updateData(eventType) {
       dateData.tabsMinCount = numTabs;
     }
   }
+  // update UI
   updateBadge();
+
   await setDateData(dateKey, dateData);
 }
 
@@ -216,4 +230,4 @@ function debounce(func, wait, immediate) {
 		timeout = setTimeout(later, wait);
 		if (callNow) func.apply(context, args);
 	};
-};
+}
