@@ -20,6 +20,7 @@ To track
 - w+ windows opened
 - w- windows closed
 - w~ window switches
+- median time on tab?
 
 Other
 - Option: Clear history
