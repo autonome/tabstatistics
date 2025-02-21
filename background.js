@@ -218,16 +218,81 @@ function evictTabIdFromCache(id) {
 
 // https://davidwalsh.name/javascript-debounce-function
 function debounce(func, wait, immediate) {
-	var timeout;
+  let timeout
 	return function() {
-		var context = this, args = arguments;
-		var later = function() {
-			timeout = null;
-			if (!immediate) func.apply(context, args);
-		};
-		var callNow = immediate && !timeout;
-		clearTimeout(timeout);
-		timeout = setTimeout(later, wait);
-		if (callNow) func.apply(context, args);
-	};
+    var context = this, args = arguments;
+    var later = function() {
+      timeout = null
+      if (!immediate) func.apply(context, args)
+    }
+    var callNow = immediate && !timeout
+    clearTimeout(timeout)
+    timeout = setTimeout(later, wait)
+    if (callNow) func.apply(context, args)
+  }
+}
+
+browser.browserAction.onClicked.addListener((tab) => {
+  console.log('TabStatistics: Exporting data to CSV...')
+  dataToCSV()
+})
+
+const dataToCSV = async () => {
+  let entries = await browser.storage.local.get(null);
+
+  // loop over keys
+  let preppedData = Object.keys(entries)
+    // make an array of only valid keys
+    .filter(k => k.startsWith('date::'))
+    // make array of only entries with valid keys
+    .map(k => entries[k])
+    // fix any bad data
+    // (so far, only ever found empty tabCounts for some reason)
+    .map(e => {
+      e.tabCounts = e.tabCounts ? e.tabCounts.join('|') : Array(24).fill().map(() => 0).join('|')
+      return e
+    })
+
+  console.log('TabStatistics: Entries exporting to CSV...', preppedData.length)
+
+  if (preppedData.length == 0) {
+    return
+  }
+
+  const csvData = CSV(preppedData)
+
+  const b = new Blob(
+    [ csvData ],
+    { type : 'text/plain;charset=utf-8' }
+  )
+
+  const url = URL.createObjectURL( b );
+
+  await browser.tabs.create({ url })
+
+  /*
+  await browser.downloads.download({
+    url,
+    filename : 'all-tab-actions.csv'
+  })
+  */
+
+  URL.revokeObjectURL(url)
+}
+
+function CSV(array) {
+  const sep = ','
+  const nl = '\n'
+  // Use first element to choose the keys and the order
+  const keys = Object.keys(array[0])
+
+  // Build header
+  let result = keys.join(sep) + nl
+
+  // Add the rows
+  array.forEach(function(obj){
+    result += keys.map(k => obj[k]).join(sep) + nl
+  })
+
+  return result
 }

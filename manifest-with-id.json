@@ -2,7 +2,7 @@
   "name": "Tab Statistics",
   "description": "Statistics for tab count, opened, closed and switched for a given day.",
   "manifest_version": 2,
-  "version": "2.0.0",
+  "version": "2.0.3",
 
   "background": {
     "scripts": ["background.js"]
@@ -19,6 +19,7 @@
   },
 
   "permissions": [
+    "downloads",
     "storage"
   ],
 

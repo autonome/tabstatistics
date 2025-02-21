@@ -1,8 +1,19 @@
 # tabstatistics
 
-A few extensions for showing real-time stats for tab count, tabs opened, tabs closed and tab switches per session.
+An extension for showing real-time per-day stats:
+
+- # tab count
+- + tabs opened
+- - tabs closed
+- ~ tab switches
+
 
 TODO
+
+- W window count
+- L loaded tab count
+- U unloaded tab count
+- D days of history stored
 
 * Re-enable storage debounce
 
