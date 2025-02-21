@@ -14,6 +14,12 @@ const prefixes = {
   tabsOpened: '+',
   tabsClosed: '-',
   tabsSwitched: '~' 
+  tabsLoaded: 'l',
+  tabsUnloaded: 'u',
+  windowCount: 'w',
+  windowOpened: 'w+',
+  windowClosed: 'w-',
+  windowsSwitched: 'w~',
 };
 
 // Listen for the reasons for activation, and pass
